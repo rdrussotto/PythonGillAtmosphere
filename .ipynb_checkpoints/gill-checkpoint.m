@@ -25,6 +25,15 @@
 % Setting nodiss = 1, zonalcomp = 1, y0 = 0 (no dissipation):
 %  figure(1)  nodiss.eps
 
+%Modified by Rick Russotto (starting October 2018) to save plots as PDFs
+%(since can't run Matlab as gui) and print test output to find discrepancies
+%with Python version I'm developing. 
+
+%Printing test output didn't work so well...
+%(matrices take up too much space) maybe better to just run
+%and look at the variables I need within command line,
+%comparing to the Python version with printed test output there.
+
 %-------------User-defined parameters follow...--------------
 
   zonalcomp = 0; % No zonal compensation of heating (Original Gill problem)
@@ -72,6 +81,10 @@ b = a;
   dy = ly/ny;
   y = -ly/2 + dy*(0:ny);
   [X,Y] = meshgrid(x,y);
+  
+%     %Russotto: indent test output
+%         x
+%         y
 
 % Shallow water phase speed
 
@@ -99,11 +112,26 @@ b = a;
   d2Mdy2 = ((Y-y0).^2/sy^2 - 1).*M/sy^2;
   Mhat = (fft(M.')).';
   dMdyhat = (fft(dMdy.')).';
+  
+%     %Test output
+%         g
+%         kh
+%         phase
+%         F
+%         M
+%         dMdy
+%         d2Mdy2
+%         Mhat
+%         dMdyhat
+        
 
 %  Define waveno. matrix 
 
   kx = (2*pi/lx)*[0:(nx/2 - 1) (-nx/2):(-1)];
   KX = ones(ny+1,1)*kx;
+  
+%         kx
+%         KX
 
 %-------------------Gill computations-----------------------------------------
 
@@ -112,6 +140,8 @@ b = a;
 %  Define v source term Sv = (a*d/dy - beta*y*d/dx)M/H
   
   Svhat = (a*dMdyhat - beta*1i*KX.*Y.*Mhat)/H;
+        
+%        Svhat
 
 %
 %  Solve (-b(a^2 + beta^2y^2)/c^2 + a*del^2 + beta*d/dx)v = Sv, or
@@ -134,8 +164,15 @@ b = a;
                  -1:1,ny-1,ny-1);
     r = Svhat(2:ny,i);
     vhat(2:ny,i) = Av\r;
+    %disp(i)
+    %disp(vhat(41,i))
   end
   v = real((ifft(vhat.')).');
+  
+%         d1
+%         vhat
+%         v
+        
 
 %  Calculate phi from
 %
@@ -154,6 +191,11 @@ b = a;
   phi = real((ifft(phihat.')).');
 
   D = M/H - b*phi/c^2;
+  
+%         dvdyhat
+%         phihat
+%         phi
+%         D
 
 
 %  Calculate vorticity zeta from divergence and v:
@@ -161,6 +203,8 @@ b = a;
 %    a*zeta + beta*(y*D + v) = 0
 
   zeta = (beta/a)*(-Y.*D - v);
+  
+%         zeta
 
 %  u calculated using div eqn: du/dx + dv/dy = M/H-b*phi/(c^2)
 
@@ -183,6 +227,13 @@ b = a;
   uhat(:,1) = uhat(:,1) - uhatmean;
 
   ucompare = real((ifft(uhat.')).');
+  
+%         dvdy
+%         uhat
+%         uhatmean
+%         zetahat
+%         dudyhath
+%         ucompare
 	    
 
 %  u calculated using x momentum eqn: -beta.y.v=-d(phi)/dx-a.u 
@@ -193,6 +244,9 @@ dphidx(:,2:nx-1)=(phi(:,3:nx)-phi(:,1:nx-2))/(2*dx);
   dphidx(:,nx)=(phi(:,1)-phi(:,nx-1))/(2*dx);
   u=(-beta*Y.*v+dphidx)/(-a);
 
+
+%         dphidx
+%         u
 
 
 
@@ -220,7 +274,8 @@ dphidx(:,2:nx-1)=(phi(:,3:nx)-phi(:,1:nx-2))/(2*dx);
     contour(x,y,D,cint,'k-')
     hold on
     cint = [-0.06 -0.02];
-    contour(x,y,D,cint,'k--')
+    %contour(x,y,D,cint,'k--')
+    contour(x,y,D,cint,'k:')
     cint = [0.02:0.04:0.1];
     contour(x,y,D,cint,'k-.')
     axis equal
@@ -241,7 +296,8 @@ dphidx(:,2:nx-1)=(phi(:,3:nx)-phi(:,1:nx-2))/(2*dx);
     cpos = (0.1:0.2:1.9)*czetamax;
     contour(x,y,zeta,cpos,'k-')
     hold on
-    contour(x,y,zeta,-cpos,'k--')
+%    contour(x,y,zeta,-cpos,'k--')
+    contour(x,y,zeta,-cpos,'k:')
     axis equal
     axis([xmin xmax ymin ymax])
     xlabel('x/R_{eq}')
@@ -257,7 +313,8 @@ dphidx(:,2:nx-1)=(phi(:,3:nx)-phi(:,1:nx-2))/(2*dx);
     hold off
     
     % Russotto: save figure to pdf
-    saveas(gcf, 'gill01.pdf')
+        saveas(gcf, 'gill01.pdf')
+        %saveas(gcf, 'gill01.png')
 
 %    Plot Gill phi
 
@@ -269,7 +326,8 @@ dphidx(:,2:nx-1)=(phi(:,3:nx)-phi(:,1:nx-2))/(2*dx);
 
     contour(x,y,phi,cpos,'k-')
     hold on
-    contour(x,y,phi,-cpos,'k--')
+    %contour(x,y,phi,-cpos,'k--')
+    contour(x,y,phi,-cpos,'k:')
     axis equal
     axis([xmin xmax ymin ymax])
     xlabel('x/R_{eq}')
@@ -281,7 +339,8 @@ dphidx(:,2:nx-1)=(phi(:,3:nx)-phi(:,1:nx-2))/(2*dx);
     hold off
     
     % Russotto: save figure to pdf
-    saveas(gcf, 'gill03.pdf')
+        saveas(gcf, 'gill03.pdf')
+        %saveas(gcf, 'gill03.png')
 
     if (zonalcomp)
   
