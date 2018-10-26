@@ -21,6 +21,33 @@ from scipy.sparse.linalg import spsolve
 
 #Function to set up the mass source M. 2 versions: one for simple Gaussian shape like 
 #in the Matlab code, one intended for input from GCM output (more versatile)
+#
+
+#Function to set up the mass source M
+#
+#Input variables:
+#nx: number of grid points in x (periodic)
+#ny: number of grid points in y
+#
+#lx: size of domain in x (periodic)
+#ly: size of domain in y
+#
+#sx: mass source half-width in x (see Eq. 16 of Bretherton and Sobel, 2003)
+#sy: mass source half-width in y (not really half-width)
+#
+#x0: center of mass source, x-coordinate
+#y0: center of mass source, y-coordinate
+#
+#zonalcomp: whether mass source is zonally compensated (i.e. subtract zonal mean)
+#
+#D0: scale factor for mass source
+#
+#Returns dict containing:
+#'M':       Mass source
+#'dMdy':    meridional first derivative of mass source
+#'d2Mdy2':  meridional second derivative of mass source
+#'Mhat':    Fourier transform of mass source
+#'dMdyhat': Fourier transform of first derivative of mass source
 def setupGillM_Gaussian(nx=128, ny=120, lx=20, ly=20, 
                         sx=2, sy=1, x0=0, y0=0, zonalcomp=0, D0=1):
     #Define the grid
@@ -58,6 +85,51 @@ def setupGillM_Gaussian(nx=128, ny=120, lx=20, ly=20,
         'dMdyhat': dMdyhat
     }
     return returnDict
+
+#Version where M does not vary in x within the half-width
+def setupGillM_Gaussian_onlyY(nx=128, ny=120, lx=20, ly=20, 
+                              sx=2, sy=1, x0=0, y0=0, zonalcomp=0, D0=1):
+    #Define the grid
+    dx = lx/nx
+    x = -lx/2.+dx*np.arange(nx)
+    dy = ly/ny
+    y = -ly/2.+dy*np.arange(ny+1)
+    X,Y=np.meshgrid(x,y)
+    
+    
+    #Define M
+#     kh = np.pi/(2.*sx)
+#     phase = kh*(X-x0)
+#     phase[X-x0>sx] = np.pi/2.
+#     phase[X-x0<-sx] = np.pi/2.
+#     F = np.cos(phase)
+    
+    F = np.ones(np.shape(X))
+    F[X-x0>sx] = 0
+    F[X-x0<-sx] = 0
+    
+    M = D0*F*np.exp(-(Y-y0)*(Y-y0)/(2*sy*sy))
+    M[0,:] = 0
+    M[ny,:] = 0
+    if zonalcomp == 1: 
+        M = M - (np.mean(np.transpose(M)))*np.ones([1,nx])
+        
+    #Calculate derivatives and Fourier transform
+    #(Y derivatives should not be changed by changing X variation)
+    dMdy = -(Y-y0)*M/(sy*sy)
+    d2Mdy2 = ((Y-y0)*(Y-y0)/(sy*sy)-1)*M/(sy*sy)
+    Mhat = np.fft.fft(M)
+    dMdyhat = np.fft.fft(dMdy)
+    
+    #Return M, derivatives, Fourier transform:
+    returnDict = {
+        'M': M,
+        'dMdy': dMdy, 
+        'd2Mdy2': d2Mdy2, 
+        'Mhat': Mhat,
+        'dMdyhat': dMdyhat
+    }
+    return returnDict
     
     
 def setupGillM_versatile():
@@ -78,6 +150,26 @@ def setupGillM_versatile():
 #Grid defined by lx, ly, nx, ny--define it inside here? 
 #Or pass it other aspects of the grid?
 
+# Function to do the computations for the Gill model
+#
+# Input variables:
+# M:         mass source as a function of x and y
+# dMdy:      meridional first derivative of mass source
+# dMdyhat:   Fourier transform of first derivative of mass source
+# nx, ny, lx, ly: see "setupGillM_Gaussian"
+# H:         Layer depth
+# g:         gravity
+# beta:      variation of Coriolis parameter with y
+# nodiss:    if 1, assume Rayleigh friction is negligible
+#
+# Returns dict containing variables:
+# 'D':      divergence
+# 'zeta':   vorticity
+# 'u':      zonal wind
+# 'v':      meridional wind
+# 'phi':    geopotential
+# 'a':      nondimensonalized Rayleigh friction coefficient (should this be input instead?)
+# 'b':      thermal diffusivity, assumed == a
 def GillComputations(M, Mhat, dMdyhat, nx=128, ny=120, lx=20, ly=20, 
                      H=1, g=1, beta=1, nodiss=0):
     #Preliminary stuff:
@@ -114,6 +206,10 @@ def GillComputations(M, Mhat, dMdyhat, nx=128, ny=120, lx=20, ly=20,
 
     # %  This is done as a loop over wavenumbers, using only the interior 
     # %  y-gridpoints 2:ny (since v = 0 at the boundaries)
+    
+    #In frequency space, 
+    #The computation of the x derivative does not depend on the form of the 
+    #function in X. 
     
     #Note: arrays must be initialized as complex to avoid casting to reals
     vhat = np.zeros([ny+1, nx]) + 1j*np.zeros([ny+1,nx]) 
@@ -199,11 +295,16 @@ def GillComputations(M, Mhat, dMdyhat, nx=128, ny=120, lx=20, ly=20,
     
     #what else might I want?
     
-#Functions to plot Gill divergence, vorticity, velocity and geopotential the way 
-#it's done in the Matlab code. 
-#More generally probably want to do this outside the module.
-
-#Need more arguments?
+# Functions to plot Gill divergence, vorticity, velocity and geopotential the way 
+# it's done in the Matlab code. 
+# More generally probably want to do this outside the module.
+#
+# Input variables:
+# D, zeta, u, v, a: see "GillComputations"
+# xmin, xmax: x limits of plot
+# ymin, ymax: y limits of plot
+# stride: spacing between grid points where quiver arrows are plotted
+# nx, ny, lx, ly: see "setupGillM_Gaussian"
 def plotGillConvVortVel(D, zeta, u, v, xmin=-10, xmax=10, ymin=-3.5, ymax=3.5, stride=4, a=.15, nx=128, ny=120, lx=20, ly=20):
     #Grid definitions
     dx = lx/nx
@@ -292,3 +393,4 @@ def main_default(nx=128, ny=120, lx=20, ly=20,
     
 
 #Version where sign of M is flipped?
+#No, just ability to specifcy D0 is sufficient

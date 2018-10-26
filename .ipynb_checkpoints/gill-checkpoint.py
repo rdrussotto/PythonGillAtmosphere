@@ -21,6 +21,33 @@ from scipy.sparse.linalg import spsolve
 
 #Function to set up the mass source M. 2 versions: one for simple Gaussian shape like 
 #in the Matlab code, one intended for input from GCM output (more versatile)
+#
+
+#Function to set up the mass source M
+#
+#Input variables:
+#nx: number of grid points in x (periodic)
+#ny: number of grid points in y
+#
+#lx: size of domain in x (periodic)
+#ly: size of domain in y
+#
+#sx: mass source half-width in x (see Eq. 16 of Bretherton and Sobel, 2003)
+#sy: mass source half-width in y (not really half-width)
+#
+#x0: center of mass source, x-coordinate
+#y0: center of mass source, y-coordinate
+#
+#zonalcomp: whether mass source is zonally compensated (i.e. subtract zonal mean)
+#
+#D0: scale factor for mass source
+#
+#Returns dict containing:
+#'M':       Mass source
+#'dMdy':    meridional first derivative of mass source
+#'d2Mdy2':  meridional second derivative of mass source
+#'Mhat':    Fourier transform of mass source
+#'dMdyhat': Fourier transform of first derivative of mass source
 def setupGillM_Gaussian(nx=128, ny=120, lx=20, ly=20, 
                         sx=2, sy=1, x0=0, y0=0, zonalcomp=0, D0=1):
     #Define the grid
@@ -78,6 +105,26 @@ def setupGillM_versatile():
 #Grid defined by lx, ly, nx, ny--define it inside here? 
 #Or pass it other aspects of the grid?
 
+# Function to do the computations for the Gill model
+#
+# Input variables:
+# M:         mass source as a function of x and y
+# dMdy:      meridional first derivative of mass source
+# dMdyhat:   Fourier transform of first derivative of mass source
+# nx, ny, lx, ly: see "setupGillM_Gaussian"
+# H:         Layer depth
+# g:         gravity
+# beta:      variation of Coriolis parameter with y
+# nodiss:    if 1, assume Rayleigh friction is negligible
+#
+# Returns dict containing variables:
+# 'D':      divergence
+# 'zeta':   vorticity
+# 'u':      zonal wind
+# 'v':      meridional wind
+# 'phi':    geopotential
+# 'a':      nondimensonalized Rayleigh friction coefficient (should this be input instead?)
+# 'b':      thermal diffusivity, assumed == a
 def GillComputations(M, Mhat, dMdyhat, nx=128, ny=120, lx=20, ly=20, 
                      H=1, g=1, beta=1, nodiss=0):
     #Preliminary stuff:
