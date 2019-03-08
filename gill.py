@@ -382,7 +382,7 @@ def main_default(nx=128, ny=120, lx=20, ly=20,
     dictM = setupGillM_Gaussian(nx=nx, ny=ny, lx=lx, ly=ly, 
                                 sx=sx, sy=sy, x0=x0, y0=y0, zonalcomp=zonalcomp, D0=D0)
     dictC = GillComputations(dictM['M'], dictM['Mhat'], dictM['dMdyhat'], 
-                             nx=128, ny=120, lx=20, ly=20, 
+                             nx=nx, ny=ny, lx=lx, ly=ly, 
                              H=H, g=g, beta=beta, nodiss=nodiss)
     #Run plotting functions
     plotGillConvVortVel(dictC['D'], dictC['zeta'], dictC['u'], dictC['v'], 
