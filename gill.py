@@ -241,17 +241,20 @@ def GillComputations(setupDict, H=1, g=1, beta=1, nodiss=0):
     uhatmean = np.mean(np.append(uhat[1:ny,0], 0.5*(uhat[0,0])+uhat[ny,0]))
     uhat[:,0] = uhat[:,0] - uhatmean
     
-    ucompare = np.real(np.fft.ifft(uhat))
+    #ucompare = np.real(np.fft.ifft(uhat))
+    u = np.real(np.fft.ifft(uhat))
     
-    
+    #Alternative calculation of u: 
     #%  u calculated using x momentum eqn: -beta.y.v=-d(phi)/dx-a.u 
-    dphidx=np.zeros((ny+1,nx)) #This should be real because phi is real
+    #Note: this blows up in inviscid case. Use divergence equation version instead.
+    #dphidx=np.zeros((ny+1,nx)) #This should be real because phi is real
 
-    dphidx[:,1:nx-1] = (phi[:, 2:nx] - phi[:,0:nx-2])/(2.*dx)
-    dphidx[:,0] = (phi[:,1]-phi[:,nx-1])/(2.*dx)
-    dphidx[:,nx-1] = (phi[:,0] - phi[:,nx-2])/(2.*dx)
-    u = (-1.*beta*Y*v+dphidx)/(-1.*a)
+    #dphidx[:,1:nx-1] = (phi[:, 2:nx] - phi[:,0:nx-2])/(2.*dx)
+    #dphidx[:,0] = (phi[:,1]-phi[:,nx-1])/(2.*dx)
+    #dphidx[:,nx-1] = (phi[:,0] - phi[:,nx-2])/(2.*dx)
+    #u = (-1.*beta*Y*v+dphidx)/(-1.*a)
     #u = (-1.*beta*Y*v+dphidx)/(-1.) #Trying this, didn't help
+    
     #Is this line the problem? u error seems to depend on division by a: 
 
     #OK, now need to return variables that might go into plots. 
