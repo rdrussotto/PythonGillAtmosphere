@@ -9,7 +9,7 @@ The analytical model of the atmospheric circulation response to tropical heating
 described by Gill (1980) is a widely used theoretical tool of tropical meteorology.
 A Matlab version of the Gill model is available on Github (https://github.com/wy2136/GillModel) 
 but no Python version, to our knowledge, has previously been made publicly available online. 
-The version posted here also includes the WTG extension described in their 2003 paper. 
+The version posted here also includes the WTG extension described in Bretherton and Sobel (2003). 
 
 # Dependencies/versions
 
