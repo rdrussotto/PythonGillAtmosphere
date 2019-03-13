@@ -2,12 +2,14 @@
 Python implementation of the Gill (1980) atmospheric model, 
 with weak temperature gradient extension by Bretherton and Sobel (2003). 
 
+Adapted for Python by Rick Russotto based on Matlab code 
+written by Adam Sobel and rewritten by Chris Bretherton.
+
 The analytical model of the atmospheric circulation response to tropical heating 
 described by Gill (1980) is a widely used theoretical tool of tropical meteorology.
 A Matlab version of the Gill model is available on Github (https://github.com/wy2136/GillModel) 
 but no Python version, to our knowledge, has previously been made publicly available online. 
-The version posted here was adapted for Python based on a Matlab version developed by Chris Bretherton and 
-Adam Sobel and also includes the WTG extension described in their 2003 paper. 
+The version posted here also includes the WTG extension described in their 2003 paper. 
 
 # Dependencies/versions
 
